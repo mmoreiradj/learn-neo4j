@@ -1,0 +1,80 @@
+{
+  "items": [
+    {
+      "tags": [
+        "neo4j",
+        "cypher",
+        "theory",
+        "knowledge-graph"
+      ],
+      "answers": [
+        {
+          "owner": {
+            "reputation": 67064,
+            "user_id": 974731,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/8f54ba41697411b238379022f9a6df56?s=256&d=identicon&r=PG",
+            "display_name": "cybersam",
+            "link": "https://stackoverflow.com/users/974731/cybersam"
+          },
+          "last_editor": {
+            "reputation": 67064,
+            "user_id": 974731,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/8f54ba41697411b238379022f9a6df56?s=256&d=identicon&r=PG",
+            "display_name": "cybersam",
+            "link": "https://stackoverflow.com/users/974731/cybersam"
+          },
+          "comment_count": 0,
+          "down_vote_count": 0,
+          "up_vote_count": 1,
+          "is_accepted": false,
+          "score": 1,
+          "last_activity_date": 1742406024,
+          "last_edit_date": 1742406024,
+          "creation_date": 1742405181,
+          "answer_id": 79520951,
+          "question_id": 79520062,
+          "share_link": "https://stackoverflow.com/a/79520951",
+          "body_markdown": "Neo4j will [filter out any MATCH result row that repeats the same relationship](https://neo4j.com/docs/cypher-manual/current/patterns/reference/#graph-patterns-rules-relationship-uniqueness). That is why **(1)** did not do what you expected.\r\n\r\nAssuming that:\r\n\r\n- `N_11` is the number of `(:User {id: &quot;1&quot;})-[:RATED]-&gt;(:Movie)` paths, and\r\n- `User` node `id` properties have string values (to allow my query to use them as map keys),\r\n\r\nthis query may do what you want:\r\n\r\n```\r\nMATCH (u1:User)-[:RATED]-&gt;(:Movie)&lt;-[:RATED]-(u2:User)\r\nWITH u1, u2, COUNT(*) as ct\r\nWITH\r\n  COLLECT(DISTINCT u1) as u1s,\r\n  COLLECT(DISTINCT u2) AS u2s,\r\n  COLLECT({headUser: u1.id, tailUser: u2.id, ct: ct}) AS pairs\r\nUNWIND apoc.coll.intersection(u1s, u2s) AS user\r\nWITH user, COUNT { (user)-[:RATED]-&gt;(:Movie) } AS userCt, pairs\r\nWITH COLLECT(user.id) AS userIds, COLLECT(userCt) AS userCts, pairs\r\nWITH apoc.map.fromLists(userIds, userCts) AS userCtMap, pairs\r\nUNWIND pairs as pair\r\nRETURN\r\n  pair.headUser AS headUser,\r\n  pair.tailUser AS tailUser,\r\n  (2.0 * pair.ct)/(userCtMap[pair.headUser] + userCtMap[pair.tailUser]) AS pathSim\r\n```\r\n\r\nThis query calculates all distinct users found by the `MATCH` clause and maps each user&#39;s `id` to its number of outgoing `-[:RATED]-&gt;(:Movie)` relationships. It then uses that mapping to calculate the denominator of your pathSim formula.",
+          "link": "https://stackoverflow.com/questions/79520062/neo4j-count-of-symmetric-meta-path-include-half-meta-paths/79520951#79520951",
+          "title": "Neo4j - Count of symmetric meta-path - Include half meta-paths"
+        }
+      ],
+      "owner": {
+        "reputation": 1,
+        "user_id": 29990490,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/aaa17fd77ab102e0ac193581bfd8b09f?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "Emanuele Maduli",
+        "link": "https://stackoverflow.com/users/29990490/emanuele-maduli"
+      },
+      "last_editor": {
+        "reputation": 1,
+        "user_id": 29990490,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/aaa17fd77ab102e0ac193581bfd8b09f?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "Emanuele Maduli",
+        "link": "https://stackoverflow.com/users/29990490/emanuele-maduli"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": true,
+      "view_count": 26,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 0,
+      "answer_count": 1,
+      "score": 0,
+      "last_activity_date": 1742406024,
+      "creation_date": 1742383686,
+      "last_edit_date": 1742384700,
+      "question_id": 79520062,
+      "share_link": "https://stackoverflow.com/q/79520062",
+      "body_markdown": "I have constructed a Neo4j graph based on MovieLens100k with the following content:\r\n\r\n 1. Nodes: `(:User)`, `(:Movie)`, `(:Genre)`\r\n\r\n 2. Relations: `(:User)-[:RATED]-&gt;(:Movie)`, `(:Movie)-[:HAS_GENRE]-&gt;(:Genre)`\r\n\r\nI want to compute PathSim, which is a similarity measure for equal-type nodes following a meta-path which links the two entities. Suppose the entities are `(:User)` and that the meta-path to follow is the following: \r\n\r\n    path1=(:User)-[:RATED]-&gt;(:Movie)&lt;-[:RATED]-(:User)\r\n\r\nSuppose to have computed such quantities:\r\n\r\nN_ij = Number of path of type path1 starting from `(:User)` with id=i and ending in `(:User)` with id=j\r\n\r\nThen PathSim for user with id 1 and id 2 is:\r\n\r\n    PathSim = 2N_12/(N_11+N_22)\r\n\r\nTo compute such quantity in Neo4j my Cypher query **(1)** is:\r\n\r\n    &quot;&quot;&quot;\r\n    MATCH path=(u1:User)-[:RATED]-&gt;(:Movie)&lt;-[:RATED]-(u2:User)\r\n    WITH u1, u2, COUNT(path) as ct\r\n    RETURN u1.id as HeadUser, u2.id as TailUser, CASE WHEN ct is null THEN 0 ELSE ct END AS Overlap\r\n    &quot;&quot;&quot;\r\n\r\nLet us focus on users 1 and 2, this correctly computes all different paths between user 1 and 2, but it does not compute all different paths between user 1 and 1. In fact, since the meta-path is symmetric, N_11 should be equal to counting the half-paths `(u1:User)-[:RATED]-&gt;(:Movie)` starting from `(:User)` with id=1, *i.e.* query **(2)**:\r\n\r\n    &quot;&quot;&quot;\r\n    MATCH path=(u1:User {id: 1})-[:RATED]-&gt;(:Movie)\r\n    WITH COUNT(path) as ct\r\n    RETURN CASE WHEN ct is null THEN 0 ELSE ct END AS Overlap\r\n    &quot;&quot;&quot;\r\n\r\nBy taking into account &quot;trivial&quot; paths consisting of going from `(:User)` to `(:Movie)` and coming back from the same exact half-path.\r\n\r\nHowever, as I understand, there is no such row in query **(1)** since Cypher only counts different half-paths given a symmetric path. \r\n\r\nIs there a way to account for &quot;trivial&quot; paths by sort of modifying query **(1)**?\r\n  ",
+      "link": "https://stackoverflow.com/questions/79520062/neo4j-count-of-symmetric-meta-path-include-half-meta-paths",
+      "title": "Neo4j - Count of symmetric meta-path - Include half meta-paths"
+    }
+  ]
+}

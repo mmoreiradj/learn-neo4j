@@ -1,5 +1,15 @@
-fullnameOverride: neo4j
+neo4j:
+  edition: community
+  name: neo4j
+  password: supersecret
+  resources:
+    cpu: "2000m"
+    memory: "4Gi"
 
-authEnabled: true
+services:
+  neo4j:
+    type: ClusterIP
 
-neo4jPassword: supersecret
+volumes:
+  data:
+    mode: defaultStorageClass
