@@ -1,0 +1,5 @@
+fullnameOverride: neo4j
+
+authEnabled: true
+
+neo4jPassword: supersecret
