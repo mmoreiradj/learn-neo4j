@@ -291,10 +291,10 @@ Results:
 ### If we know that vincent likes science fiction how can we recommend movies in the same genre
 
 ```cypher
-MATCH (vincent:User {name: "Vincent"})-[:LIKES]->(liked:Movie {genre: "Sci-Fi"})
-MATCH (movie:Movie {genre: "Sci-Fi"})
-WHERE liked <> movie
-RETURN movie
+MATCH (vincent:User {name: "Vincent"})-[:LIKES]->(liked:Movie {genre: "Sci-Fi"}) // movies vincent liked
+MATCH (movie:Movie {genre: "Sci-Fi"}) // all sci-fi movies
+WHERE liked <> movie // exclude the movies vincent already liked
+RETURN movie;
 ```
 
 Results:
