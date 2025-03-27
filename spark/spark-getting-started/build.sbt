@@ -27,11 +27,11 @@ lazy val root = (project in file(".")).
       "org.apache.hadoop" % "hadoop-common" % "3.4.1" % "provided",
       "org.apache.hadoop" % "hadoop-aws" % "3.4.1" % "provided",
       "com.amazonaws" % "aws-java-sdk-bundle" % "1.12.782" % "provided",
-      // "org.mongodb.spark" % "mongo-spark-connector_2.13" % "3.0.1",
-      // "org.neo4j" % "neo4j-connector-apache-spark_2.13" % "5.3.5_for_spark_3" excludeAll(
-      //   ExclusionRule(organization = "io.netty", name = "netty-handler"),
-      //   ExclusionRule(organization = "io.netty", name = "netty-common")
-      // ),
+      "org.mongodb.spark" % "mongo-spark-connector_2.12" % "10.4.1",
+      "org.neo4j" % "neo4j-connector-apache-spark_2.12" % "5.3.5_for_spark_3" excludeAll(
+        ExclusionRule(organization = "io.netty", name = "netty-handler"),
+        ExclusionRule(organization = "io.netty", name = "netty-common")
+      ),
 
       "org.scalatest" %% "scalatest" % "3.2.2" % "test",
       "org.scalacheck" %% "scalacheck" % "1.15.2" % "test",

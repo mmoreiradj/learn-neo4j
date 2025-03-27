@@ -155,3 +155,5 @@ docs/_build/
 .metals
 
 app.yaml.tmp
+
+app-*.yaml

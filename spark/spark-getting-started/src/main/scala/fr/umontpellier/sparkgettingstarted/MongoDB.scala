@@ -1,19 +1,20 @@
-// import org.apache.spark.sql.{SparkSession, Dataset}
-// import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{SparkSession, Dataset}
+import org.apache.spark.sql.functions._
+import com.mongodb.spark._
 
-// object MongoDB {
-//   def main(args: Array[String]): Unit = {
-//     val spark = SparkSession.builder
-//       .appName("MongoDB")
-//       .getOrCreate()
+object MongoDB {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder
+      .appName("MongoDB")
+      .getOrCreate()
 
-//     val df = spark.read.format("mongodb")
-//       .option("database", "datascience")
-//       .option("collection", "people")
-//       .load()
+    val df = spark.read.format("mongodb")
+      .option("database", "datascience")
+      .option("collection", "people")
+      .load()
 
-//     df.show()
+    df.show()
 
-//     spark.stop()
-//   }
-// }
+    spark.stop()
+  }
+}

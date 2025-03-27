@@ -6,10 +6,10 @@ metadata:
 spec:
   type: Scala
   mode: cluster
-  image: spark-getting-started:${IMAGE_VERSION}
-  imagePullPolicy: IfNotPresent
+  image: spark-getting-started
+  imagePullPolicy: Never
   mainClass: ${MAIN_CLASS}
-  mainApplicationFile: local:///opt/spark/app/jars/app.jars
+  mainApplicationFile: http://minio.spark.svc.cluster.local:9000/deployments/app.jar
   sparkConf:
     spark.hadoop.fs.s3a.access.key: minio-access-key
     spark.hadoop.fs.s3a.secret.key: minio-secret-key
@@ -23,10 +23,6 @@ spec:
     spark.kubernetes.driver.service.domain: default.svc.cluster.local
     spark.mongodb.read.connection.uri: mongodb://root:mongodb-root@mongodb-headless.spark.svc.cluster.local:27017/?authSource=admin
     spark.mongodb.write.connection.uri: mongodb://root:mongodb-root@mongodb-headless.spark.svc.cluster.local:27017/?authSource=admin
-    spark.neo4j.bolt.url: bolt://neo4j.spark.svc.cluster.local:7687
-    spark.neo4j.bolt.user: neo4j
-    spark.neo4j.bolt.password: neo4j
-    spark.neo4j.bolt.database: neo4j
   sparkVersion: 3.5.5
   driver:
     labels:
