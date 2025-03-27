@@ -22,7 +22,6 @@ deploy:
   kubectl wait pods/my-cluster-dual-role-0 --for=condition=Ready --timeout=300s -n kafka
   kubectl exec -it my-cluster-dual-role-0 -n kafka -- ./bin/kafka-topics.sh --create --topic movies --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
-
 delete:
   k3d cluster delete spark
 
@@ -53,5 +52,17 @@ restart MAIN_CLASS:
   kubectl delete -f app-{{MAIN_CLASS}}.yaml || true
   kubectl apply -f app-{{MAIN_CLASS}}.yaml
 
-pf:
-  kubectl port-forward svc/minio -n spark 9000:9000 9001:9001
+pf-all:
+  #!/bin/bash
+  kubectl port-forward svc/minio -n spark 9000:9000 9001:9001 & \
+  kubectl port-forward svc/spark-neo4j -n spark 7474:7474 7687:7687 & \
+  wait
+
+mongosh:
+  kubectl exec -it mongodb-0 -n spark -- mongosh --username root --password mongodb-root
+
+create-topic TOPIC PARTITIONS="3" REPLICATION="1":
+  kubectl exec -it my-cluster-dual-role-0 -n kafka -- ./bin/kafka-topics.sh --create --topic {{TOPIC}} --bootstrap-server localhost:9092 --partitions {{PARTITIONS}} --replication-factor {{REPLICATION}}
+
+kafka-console TOPIC:
+  kubectl exec -it my-cluster-dual-role-0 -n kafka -- ./bin/kafka-console-producer.sh --topic {{TOPIC}} --bootstrap-server localhost:9092
