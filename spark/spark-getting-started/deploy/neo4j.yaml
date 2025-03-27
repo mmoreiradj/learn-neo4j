@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-neo4j
+  namespace: spark
+spec:
+  selector:
+    matchLabels:
+      app: spark-neo4j
+  template:
+    metadata:
+      labels:
+        app: spark-neo4j
+    spec:
+      containers:
+      - name: neo4j
+        image: neo4j:latest
+        env:
+        - name: NEO4J_AUTH
+          value: "neo4j/neo4j-admin"
+        - name: NEO4J_dbms_default__database
+          value: "neo4j"
+        - name: NEO4J_dbms.jvm.additional
+          value: "-Dlog4j2.formatMsgNoLookups=true"
+        - name: NEO4J_dbms.memory.heap.initial_size
+          value: "1024m"
+        - name: NEO4J_dbms.memory.heap.max_size
+          value: "4G"
+        - name: NEO4J_dbms_memory_pagecache_size
+          value: "512m"
+        - name: NEO4J_server_config_strict__validation_enabled
+          value: "false"
+        # resources:
+        #   limits:
+        #     memory: "4Gi"
+        #     cpu: "1000m"
+        ports:
+        - containerPort: 7474
+          name: http
+        - containerPort: 7687
+          name: bolt
+        volumeMounts:
+        - name: neo4j-data
+          mountPath: /data
+        - name: neo4j-import
+          mountPath: /var/lib/neo4j/import/data
+      volumes:
+      - name: neo4j-data
+        persistentVolumeClaim:
+          claimName: neo4j-data
+      - name: neo4j-import
+        persistentVolumeClaim:
+          claimName: neo4j-import
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-neo4j
+  namespace: spark
+spec:
+  selector:
+    app: spark-neo4j
+  ports:
+  - port: 7474
+    name: http
+    targetPort: http
+  - port: 7687
+    name: bolt
+    targetPort: bolt
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neo4j-data
+  namespace: spark
+spec:
+  resources:
+    requests:
+      storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neo4j-import
+  namespace: spark
+spec:
+  resources:
+    requests:
+      storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce

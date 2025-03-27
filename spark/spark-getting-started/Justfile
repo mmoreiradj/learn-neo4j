@@ -1,0 +1,38 @@
+deploy:
+  #!/bin/bash
+  set -e
+  k3d cluster ls | grep spark || k3d cluster create spark --registry-create spark-registry:0.0.0.0:5000 -p "8443:443@loadbalancer" -p "8080:80@loadbalancer"
+  helm repo add spark-operator https://kubeflow.github.io/spark-operator
+  helm repo update
+  helm upgrade --install spark-operator spark-operator/spark-operator -n spark-operator --create-namespace --set webhook.enable=true
+  helm upgrade --install mongodb oci://registry-1.docker.io/bitnamicharts/mongodb -f deploy/mongodb.yaml -n spark --create-namespace
+  kubectl create namespace kafka
+  kubectl apply -f 'https://strimzi.io/install/latest?namespace=kafka' -n kafka
+  kubectl apply -f deploy/kafka.yaml
+  kubectl apply -f deploy/minio.yaml
+  kubectl apply -f deploy/neo4j.yaml
+  # init kafka
+  kubectl wait kafka/my-cluster-dual-role-0 --for=condition=Ready --timeout=300s -n kafka
+  kubectl exec -it my-cluster-kafka-0 -n kafka -- ./bin/kafka-topics.sh --create --topic movies --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+  # init minio
+  kubectl wait deployment/minio --for=jsonpath='{.status.readyReplicas}'=1 --timeout=300s -n spark
+  MINIO_POD=$(kubectl get pods -n spark -l app=minio -o jsonpath='{.items[0].metadata.name}')
+  kubectl exec -it ${MINIO_POD} -n spark -- mc alias set minio http://localhost:9000 minio-access-key minio-secret-key
+  kubectl exec -it ${MINIO_POD} -n spark -- mc mb minio/data -p
+
+delete:
+  k3d cluster delete spark
+
+run MAIN_CLASS:
+  #!/bin/bash
+  set -e
+  IMAGE_VERSION=$(date +%Y%m%d%H%M%S)
+  sbt compile assembly
+  docker build -t spark-getting-started:${IMAGE_VERSION} -f simpleapp.Dockerfile .
+  k3d image import spark-getting-started:${IMAGE_VERSION} -c spark
+  IMAGE_VERSION=${IMAGE_VERSION} MAIN_CLASS={{MAIN_CLASS}} envsubst < app.yaml > app.yaml.tmp
+  kubectl apply -f app.yaml.tmp
+
+restart:
+  kubectl delete -f app.yaml.tmp
+  kubectl apply -f app.yaml.tmp

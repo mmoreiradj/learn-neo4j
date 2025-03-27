@@ -1,0 +1,42 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: simpleapp
+  namespace: default
+spec:
+  type: Scala
+  mode: cluster
+  image: spark-getting-started:${IMAGE_VERSION}
+  imagePullPolicy: IfNotPresent
+  mainClass: ${MAIN_CLASS}
+  mainApplicationFile: local:///opt/spark/app/jars/app.jars
+  sparkConf:
+    spark.hadoop.fs.s3a.access.key: minio-access-key
+    spark.hadoop.fs.s3a.secret.key: minio-secret-key
+    spark.hadoop.fs.s3a.endpoint: http://minio.spark.svc.cluster.local:9000
+    spark.hadoop.fs.s3a.path.style.access: "true"
+    spark.driver.extraJavaOptions: "-Dlog4j.rootCategory=DEBUG,console"
+    spark.executor.extraJavaOptions: "-Dlog4j.rootCategory=DEBUG,console"
+    spark.log.level: DEBUG
+    spark.kubernetes.driver.pod.name: simpleapp-driver
+    spark.kubernetes.driver.service.name: simpleapp-driver
+    spark.kubernetes.driver.service.domain: default.svc.cluster.local
+    spark.mongodb.read.connection.uri: mongodb://root:mongodb-root@mongodb-headless.spark.svc.cluster.local:27017/?authSource=admin
+    spark.mongodb.write.connection.uri: mongodb://root:mongodb-root@mongodb-headless.spark.svc.cluster.local:27017/?authSource=admin
+    spark.neo4j.bolt.url: bolt://neo4j.spark.svc.cluster.local:7687
+    spark.neo4j.bolt.user: neo4j
+    spark.neo4j.bolt.password: neo4j
+    spark.neo4j.bolt.database: neo4j
+  sparkVersion: 3.5.5
+  driver:
+    labels:
+      version: 3.5.5
+    cores: 1
+    memory: 512m
+    serviceAccount: spark-operator-spark
+  executor:
+    labels:
+      version: 3.5.5
+    instances: 1
+    cores: 1
+    memory: 512m

@@ -1,0 +1,7 @@
+architecture: "replicaset"
+
+auth:
+  rootPassword: "mongodb-root"
+
+passwordUpdateJob:
+  enabled: true
